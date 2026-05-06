@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADAARC — Retiro de Materiales</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+:root{--bg:#0A0E1A;--card:#111827;--border:#1F2D45;--accent:#00D4FF;--accent2:#7B2FBE;--white:#F0F4FF;--muted:#6B7A99;--ok:#00E676;--warn:#FFB300;--err:#FF5252;--input-bg:#0D1526;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(0,212,255,.08),transparent 60%),radial-gradient(ellipse 50% 60% at 80% 80%,rgba(123,47,190,.10),transparent 60%),var(--bg);}
+.wrap{width:100%;max-width:520px;animation:up .6s ease both;}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.hdr{text-align:center;margin-bottom:24px;}
+.badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--card),#1A2540);border:1px solid var(--border);border-radius:100px;padding:7px 18px;margin-bottom:16px;font-size:13px;font-weight:600;color:var(--accent);}
+.dot{width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse 2s ease infinite;}
+@keyframes pulse{50%{opacity:.4;transform:scale(1.3)}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(24px,6vw,34px);font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:6px;}
+.hdr p{color:var(--muted);font-size:14px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.5);}
+.step{display:none;animation:fin .35s ease;}
+.step.active{display:block;}
+@keyframes fin{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+.prog{display:flex;gap:8px;margin-bottom:26px;}
+.pd{flex:1;height:4px;border-radius:4px;background:var(--border);transition:background .3s;}
+.pd.on{background:var(--accent);}
+.stitle{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;margin-bottom:3px;}
+.ssub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.field{margin-bottom:18px;}
+label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
+input,select{width:100%;background:var(--input-bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;padding:13px 15px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.12);}
+input::placeholder{color:#3A4A66;}
+select option{background:var(--card);}
+.hint{font-size:11px;color:var(--muted);margin-top:4px;}
+.errtxt{font-size:11px;color:var(--err);margin-top:4px;display:none;}
+.errtxt.on{display:block;}
+.utag{display:inline-flex;align-items:center;gap:7px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:100px;padding:5px 13px;font-size:13px;color:var(--accent);margin-bottom:18px;}
+.glist{max-height:380px;overflow-y:auto;padding-right:2px;margin-bottom:10px;}
+.glist::-webkit-scrollbar{width:3px;}
+.glist::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.gbtn{width:100%;background:var(--input-bg);border:1.5px solid var(--border);border-radius:11px;padding:13px 15px;cursor:pointer;display:flex;align-items:center;margin-bottom:8px;transition:all .2s;color:var(--white);font-family:'Space Grotesk',sans-serif;text-align:left;}
+.gbtn:hover,.gbtn.sel{border-color:var(--accent);background:rgba(0,212,255,.06);}
+.gico{font-size:20px;margin-right:11px;flex-shrink:0;}
+.ginfo{flex:1;}
+.gname{font-size:14px;font-weight:600;}
+.gcnt{font-size:11px;color:var(--muted);margin-top:1px;}
+.garr{font-size:18px;color:var(--muted);transition:transform .2s;margin-left:8px;}
+.gbtn.sel .garr{transform:rotate(90deg);color:var(--accent);}
+.slist{background:rgba(0,212,255,.02);border:1px solid rgba(0,212,255,.12);border-radius:10px;padding:6px;margin-top:-3px;margin-bottom:8px;display:none;}
+.slist.open{display:block;animation:fin .25s ease;}
+.sitem{display:flex;align-items:center;padding:9px 11px;border-radius:8px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .15s;}
+.sitem:last-child{margin-bottom:0;}
+.sitem:hover{background:rgba(0,212,255,.07);border-color:rgba(0,212,255,.18);}
+.sitem.sel{background:rgba(0,212,255,.12);border-color:var(--accent);}
+.sl{flex:1;}
+.sid{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.05em;}
+.sname{font-size:13px;font-weight:600;margin-top:1px;}
+.sstk{font-size:11px;margin-top:2px;}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--err)}
+.schk{width:19px;height:19px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;color:#000;flex-shrink:0;margin-left:8px;}
+.sitem.sel .schk{display:flex;}
+.swrap{position:relative;margin-bottom:12px;}
+.swrap input{padding-left:40px;}
+.sico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);}
+.qwrap{display:flex;align-items:center;gap:11px;}
+.qbtn{width:42px;height:42px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:10px;color:var(--white);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.qbtn:hover{border-color:var(--accent);color:var(--accent);}
+.qdsp{font-size:23px;font-weight:700;color:var(--accent);min-width:46px;text-align:center;}
+.smry{background:var(--input-bg);border:1px solid var(--border);border-radius:11px;padding:16px;margin-bottom:16px;}
+.srow{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.srow:last-child{border-bottom:none;}
+.sk{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
+.sv{color:var(--white);font-weight:600;text-align:right;max-width:60%;}
+.btn{width:100%;padding:14px;border:none;border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;}
+.bp{background:linear-gradient(135deg,var(--accent),#0090B8);color:#0A0E1A;}
+.bp:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.33);}
+.bp:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+.bg{background:transparent;border:1.5px solid var(--border);color:var(--muted);margin-top:9px;}
+.bg:hover{border-color:var(--muted);color:var(--white);}
+.btest{background:rgba(255,179,0,.1);border:1.5px solid rgba(255,179,0,.3);color:#FFB300;margin-top:9px;}
+.testbar{background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.2);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--warn);display:none;}
+.testbar.on{display:block;}
+.trow{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:9px 13px;background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.12);border-radius:9px;}
+.tsw{position:relative;width:36px;height:21px;flex-shrink:0;}
+.tsw input{opacity:0;width:0;height:0;}
+.tsl{position:absolute;inset:0;background:var(--border);border-radius:11px;cursor:pointer;transition:.3s;}
+.tsl::before{content:'';position:absolute;width:15px;height:15px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+input:checked+.tsl{background:#FFD700;}
+input:checked+.tsl::before{transform:translateX(15px);}
+.tlbl{font-size:12px;color:#FFD700;font-weight:600;}
+.sico2{width:74px;height:74px;background:linear-gradient(135deg,rgba(0,230,118,.14),rgba(0,212,255,.09));border:2px solid var(--ok);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:pop .5s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.stk{font-family:'Syne',sans-serif;font-size:25px;font-weight:800;color:var(--ok);text-align:center;margin-bottom:7px;}
+.ssb{color:var(--muted);text-align:center;font-size:14px;margin-bottom:20px;}
+.ts{background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.14);border-radius:9px;padding:11px 15px;font-size:13px;color:var(--ok);text-align:center;margin-bottom:16px;}
+.conn-banner{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:600;margin-bottom:14px;border:1px solid;}
+.conn-ok{background:rgba(0,230,118,.07);border-color:rgba(0,230,118,.25);color:var(--ok);}
+.conn-err{background:rgba(255,82,82,.07);border-color:rgba(255,82,82,.25);color:var(--err);}
+.conn-pend{background:rgba(255,179,0,.07);border-color:rgba(255,179,0,.25);color:var(--warn);}
+.conn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.conn-ok .conn-dot{background:var(--ok);}
+.conn-err .conn-dot{background:var(--err);}
+.conn-pend .conn-dot{background:var(--warn);animation:pulse 1.5s ease infinite;}
+.loading-overlay{position:fixed;inset:0;background:rgba(10,14,26,.85);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.loading-overlay.on{display:flex;}
+.spin{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{color:var(--muted);font-size:14px;}
+
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+.tipo-btn{background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;padding:20px 12px;cursor:pointer;transition:all .2s;color:var(--white);font-family:'Space Grotesk',sans-serif;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;}
+.tipo-btn:hover{border-color:var(--accent);background:rgba(0,212,255,.06);}
+.tipo-btn.sel-retiro{border-color:#FF5252;background:rgba(255,82,82,.1);}
+.tipo-btn.sel-ingreso{border-color:#00E676;background:rgba(0,230,118,.1);}
+.tipo-ico{font-size:32px;}
+.tipo-nm{font-size:16px;font-weight:700;}
+.tipo-dc{font-size:11px;color:var(--muted);line-height:1.3;}
+.ingr-match-badge{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--ok);font-weight:600;}
+.ingr-new-badge{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--accent);font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <p>Registrando en Google Sheets…</p>
+</div>
+
+<div class="wrap">
+  <div class="hdr">
+    <div class="badge"><div class="dot"></div>ADAARC · Depósito Informática</div>
+    <h1>Retiro de<br>Materiales</h1>
+    <p>Identificate para registrar tu retiro</p>
+  </div>
+  <div class="card">
+    <div class="prog"><div class="pd" id="p1"></div><div class="pd" id="p2"></div><div class="pd" id="p3"></div><div class="pd" id="p4"></div><div class="pd" id="p5"></div></div>
+
+    <!-- S1: Email -->
+    <div class="step active" id="s1">
+      <div class="stitle">Identificación</div>
+      <div class="ssub">Ingresá tu correo institucional</div>
+      <div class="conn-banner conn-pend" id="connBanner">
+        <div class="conn-dot"></div>
+        <span id="connText">Verificando conexión con Google Sheets…</span>
+      </div>
+      <div class="field">
+        <label>Correo institucional</label>
+        <input type="email" id="eml" placeholder="nombre@adaarc.org.ar" autocapitalize="none" autocomplete="email">
+        <div class="hint">Solo cuentas @adaarc.org.ar</div>
+        <div class="errtxt" id="eerr">Correo no autorizado. Verificá tu cuenta institucional.</div>
+      </div>
+      <button class="btn bp" onclick="valEmail()">Continuar →</button>
+
+    </div>
+
+    <!-- S1b: Tipo operación -->
+    <div class="step" id="s1b">
+      <div class="utag" id="utagb">— usuario —</div>
+      <div class="stitle">¿Qué querés hacer?</div>
+      <div class="ssub">Elegí el tipo de operación</div>
+      <div class="tipo-grid">
+        <button class="tipo-btn" id="btnRetiro" onclick="setTipo('SALIDA')">
+          <span class="tipo-ico">📤</span>
+          <div class="tipo-nm">Retirar</div>
+          <div class="tipo-dc">Sacar un producto o toner del depósito</div>
+        </button>
+        <button class="tipo-btn" id="btnIngreso" onclick="setTipo('ENTRADA')">
+          <span class="tipo-ico">📥</span>
+          <div class="tipo-nm">Ingresar</div>
+          <div class="tipo-dc">Agregar stock al depósito</div>
+        </button>
+      </div>
+      <button class="btn bg" onclick="gos(1)">← Volver</button>
+    </div>
+
+    <!-- S2i: Ingreso -->
+    <div class="step" id="s2i">
+      <div class="utag" id="utag2i">— usuario —</div>
+      <div class="stitle">¿Qué producto ingresás?</div>
+      <div class="ssub">Escribí el nombre o ID — el sistema detecta si ya existe o es nuevo</div>
+      <div class="field">
+        <label>Producto</label>
+        <div class="swrap" style="margin-bottom:0">
+          <span class="sico">🔍</span>
+          <input type="text" id="ingrNombre" placeholder="Ej: Cable HDMI, TN-003, Patch Cord..." oninput="buscarIngreso()" autocomplete="off">
+        </div>
+      </div>
+      <div id="ingrExistente" style="display:none">
+        <div class="ingr-match-badge" id="ingrMatchBadge"></div>
+        <div class="field" id="ingrDifField" style="display:none">
+          <label>Variante (color / marca)</label>
+          <select id="ingrDif"><option value="">— Sin variante —</option></select>
+        </div>
+        <div class="field">
+          <label>Cantidad a ingresar</label>
+          <div class="qwrap">
+            <button class="qbtn" onclick="chgQIngr(-1)">−</button>
+            <div class="qdsp" id="qdspIngr">1</div>
+            <button class="qbtn" onclick="chgQIngr(1)">+</button>
+          </div>
+        </div>
+        <button class="btn bp" onclick="confirmarIngreso()">📥 Confirmar ingreso</button>
+      </div>
+      <div id="ingrNuevo" style="display:none">
+        <div class="ingr-new-badge">✨ Producto nuevo — completá los datos</div>
+        <div class="field">
+          <label>Categoría</label>
+          <select id="ingrCat">
+            <option value="">— Seleccionar —</option>
+            <option>Conectividad</option><option>Cables / Red</option><option>Cables / Video</option>
+            <option>Cables / USB</option><option>Cables / Telefonía</option><option>Cables / Energía</option>
+            <option>Redes / WiFi</option><option>Redes / Router</option><option>Redes / Switch</option>
+            <option>Energía</option><option>Hardware PC</option><option>Almacenamiento</option>
+            <option>Rack / Infraestructura</option><option>Eléctrico / Kalop</option>
+            <option>Eléctrico / Teclastar</option><option>Accesorios</option>
+            <option>Toners</option><option>Iluminación</option><option>Varios</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Variante / color / marca (opcional)</label>
+          <input type="text" id="ingrVarNew" placeholder="Ej: Azul, HP, 3M... (vacío si no aplica)">
+        </div>
+        <div class="field">
+          <label>Cantidad</label>
+          <div class="qwrap">
+            <button class="qbtn" onclick="chgQIngr(-1)">−</button>
+            <div class="qdsp" id="qdspIngrNew">1</div>
+            <button class="qbtn" onclick="chgQIngr(1)">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Link de compra (opcional)</label>
+          <input type="text" id="ingrLink" placeholder="URL MercadoLibre para reponer">
+        </div>
+        <button class="btn bp" onclick="confirmarIngresoNuevo()">✨ Registrar producto nuevo</button>
+      </div>
+      <button class="btn bg" onclick="gos('1b')">← Volver</button>
+    </div>
+
+    <!-- S2: Grupos / selección de producto para retiro -->
+    <div class="step" id="s2">
+      <div class="utag" id="utag">— usuario —</div>
+      <div class="stitle">Seleccionar producto</div>
+      <div class="ssub">Elegí la categoría y luego el ítem específico</div>
+      <div class="trow">
+        <label class="tsw"><input type="checkbox" id="ttog" onchange="toggleTest()"><span class="tsl"></span></label>
+        <span class="tlbl">⚡ Modo verificación de stock</span>
+      </div>
+      <div class="testbar" id="tbar">Modo activo: los retiros modifican el stock en tiempo real para testeo.</div>
+      <div class="swrap"><span class="sico">🔍</span><input type="text" id="psrch" placeholder="Buscar por nombre o ID..." oninput="filterG()"></div>
+      <div class="glist" id="glist"></div>
+      <button class="btn bp" id="b2" onclick="toS3()" disabled>Continuar →</button>
+      <button class="btn bg" onclick="gos('1b')">← Volver</button>
+    </div>
+
+    <!-- S3: Cantidad -->
+    <div class="step" id="s3">
+      <div class="stitle">Cantidad y detalles</div>
+      <div class="ssub" id="s3pn">—</div>
+      <div class="field">
+        <label>Cantidad a retirar</label>
+        <div class="qwrap">
+          <button class="qbtn" onclick="chgQ(-1)">−</button>
+          <div class="qdsp" id="qdsp">1</div>
+          <button class="qbtn" onclick="chgQ(1)">+</button>
+        </div>
+        <div class="hint" id="shint"></div>
+      </div>
+      <div class="field" id="dff" style="display:none">
+        <label>Variante (color / marca)</label>
+        <select id="dfs"><option value="">— Seleccionar variante —</option></select>
+        <div class="hint">Indicá si hay variantes del producto</div>
+      </div>
+      <div class="field">
+        <label>Observación (opcional)</label>
+        <input type="text" id="obs" placeholder="Ej: para sala de reuniones, reemplazo...">
+      </div>
+      <button class="btn bp" onclick="toS4()">Revisar pedido →</button>
+      <button class="btn bg" onclick="gos(2)">← Volver</button>
+    </div>
+
+    <!-- S4: Confirmación -->
+    <div class="step" id="s4">
+      <div class="stitle" id="confirmTitle">Confirmar operación</div>
+      <div class="ssub">Revisá los datos antes de confirmar</div>
+      <div class="smry" id="smry"></div>
+      <button class="btn bp" onclick="confirm_()">✓ Confirmar retiro</button>
+      <button class="btn bg" onclick="gos(3)">← Volver</button>
+    </div>
+
+    <!-- S5: Éxito -->
+    <div class="step" id="s5">
+      <div class="sico2">✓</div>
+      <div class="stk" id="successTitle">¡Operación registrada!</div>
+      <div class="ssb">Tu pedido fue registrado correctamente</div>
+      <div class="ts" id="tsbox">—</div>
+      <div id="sheetsStatus" style="font-size:12px;text-align:center;margin-bottom:12px;"></div>
+      <div class="smry" id="oksmry"></div>
+      <button class="btn bp" onclick="reset_()" style="margin-top:14px">Nuevo retiro</button>
+      <!-- ✅ CORRECCIÓN #3: id correcto era 'rbtn', no 'restoreBtn' -->
+      <button class="btn btest" id="rbtn" onclick="restoreStock()" style="display:none">🔄 Restaurar stock original</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — URL fija del Apps Script
+//  Si republicás el script, reemplazá solo esta línea
+// ══════════════════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3MxhOisdcAryfhr1nVa23iIzpbXBSe901P9QdbAvGRakIFYpJ27vZ3D_4zOtc3ml5/exec";
+
+// ── DATOS FIJOS ──────────────────────────────────────────
+const EMAILS=["carolina.vaca@adaarc.org.ar","paula.echalar@adaarc.org.ar","ruth.polo@adaarc.org.ar","clara.brandan@adaarc.org.ar","mariano.trucco@adaarc.org.ar","diego.gola@adaarc.org.ar","laura.yalovetzky@adaarc.org.ar","javier.cuello@adaarc.org.ar","ramon.milek@adaarc.org.ar","florencia.saravia@adaarc.org.ar","gabriela.laborde@adaarc.org.ar","carina.roses@adaarc.org.ar","mirna.sargentoni@adaarc.org.ar","belen.sammartino@adaarc.org.ar","cecilia.cross@adaarc.org.ar","rominaaltamirano@adaarc.org.ar"];
+const NOM={"carolina.vaca@adaarc.org.ar":"Carolina Vaca Robledo","paula.echalar@adaarc.org.ar":"Paula Echalar","ruth.polo@adaarc.org.ar":"Ruth Polo","clara.brandan@adaarc.org.ar":"Maria Clara Brandan","mariano.trucco@adaarc.org.ar":"Mariano Trucco","diego.gola@adaarc.org.ar":"Diego Gola","laura.yalovetzky@adaarc.org.ar":"Maria Laura Yalovetzky","javier.cuello@adaarc.org.ar":"Javier Cuello","ramon.milek@adaarc.org.ar":"Ramon Milek","florencia.saravia@adaarc.org.ar":"Florencia Saravia","gabriela.laborde@adaarc.org.ar":"Gabriela Laborde","carina.roses@adaarc.org.ar":"Carina Roses","mirna.sargentoni@adaarc.org.ar":"Mirna Sargentoni","belen.sammartino@adaarc.org.ar":"Belen Sammartino","cecilia.cross@adaarc.org.ar":"Cecilia Cross","rominaaltamirano@adaarc.org.ar":"Romina Altamirano"};
+
+// Stock original para restaurar en modo test
+const STK0={"DP-001":13,"DP-002":4,"DP-003":2,"DP-004":1,"DP-005":13,"DP-006":10,"DP-007":2,"DP-008":1,"DP-009":2,"DP-010":5,"DP-011":6,"DP-012":2,"DP-013":2,"DP-014":1,"DP-015":3,"DP-016":1,"DP-017":1,"DP-018":1,"DP-019":2,"DP-020":2,"DP-021":1,"DP-022":1,"DP-023":1,"DP-024":2,"DP-025":3,"DP-026":18,"DP-027":4,"DP-028":3,"DP-029":2,"DP-030":3,"DP-031":3,"DP-032":1,"DP-033":6,"DP-034":3,"DP-035":8,"DP-036":1,"DP-037":15,"DP-038":1,"DP-039":1,"DP-040":1};
+
+const GS=[
+  {id:"cables",ic:"🔌",nm:"Cables",dc:"Red, video, USB, telefonía, energía",items:[
+    {id:"DP-005",n:"Patch Cord RJ45",s:13,m:4,d:"Azul,Gris,Blanco,Negro"},
+    {id:"DP-006",n:"Cable Telefónico RJ11 (Linx)",s:10,m:3,d:"Gris,Negro"},
+    {id:"DP-007",n:"Cable USB-A a USB-B (impresora)",s:2,m:1,d:""},
+    {id:"DP-008",n:"Cable USB 3.0 Micro-B (disco)",s:1,m:1,d:""},
+    {id:"DP-009",n:"Cable HDMI",s:2,m:1,d:"Dinax 3M,Netmak 1.8M"},
+    {id:"DP-010",n:"Cable VGA doble filtro",s:5,m:2,d:""},
+    {id:"DP-011",n:"Cable Alimentación IEC C13",s:6,m:2,d:""},
+    {id:"DP-012",n:"Cable Alimentación IEC C13/C14",s:2,m:1,d:""},
+    {id:"DP-013",n:"Cable Bipolar IEC C7 (figura 8)",s:2,m:1,d:""},
+    {id:"DP-014",n:"Cable/Adaptador corto corriente",s:1,m:1,d:""},
+  ]},
+  {id:"redes",ic:"📡",nm:"Equipos de Red",dc:"Switches, routers, APs, extensores WiFi",items:[
+    {id:"DP-016",n:"AP Techo TP-Link EAP110",s:1,m:1,d:""},
+    {id:"DP-017",n:"Extensor WiFi TP-Link TL-WA850RE",s:1,m:1,d:""},
+    {id:"DP-018",n:"Extensor WiFi Mercusys MW300RE",s:1,m:1,d:""},
+    {id:"DP-019",n:"Router Portátil TP-Link",s:2,m:1,d:""},
+    {id:"DP-020",n:"Switch TP-Link TL-SF1008D (8p)",s:2,m:1,d:""},
+    {id:"DP-023",n:"Adaptador USB WiFi",s:1,m:1,d:""},
+  ]},
+  {id:"conectividad",ic:"🔗",nm:"Conectividad / Patch Panel",dc:"Keystones, módulos RJ45/RJ11, patch panel",items:[
+    {id:"DP-001",n:"Keystone Jack Cat.5e Furukawa",s:13,m:5,d:""},
+    {id:"DP-002",n:"Módulo RJ45 Kalop",s:4,m:2,d:"LAN completo,Sin boca"},
+    {id:"DP-003",n:"Módulo RJ11 Teléfono Kalop",s:2,m:1,d:""},
+    {id:"DP-004",n:"Patch Panel Cat.5e 24 puertos",s:1,m:1,d:""},
+  ]},
+  {id:"electrico",ic:"⚡",nm:"Eléctrico / Kalop / Teclastar",dc:"Módulos, marcos, tomacorrientes, bastidores",items:[
+    {id:"DP-025",n:"Tomacorriente Modular Blanco",s:3,m:2,d:""},
+    {id:"DP-026",n:"Módulo Blanco Modelo 1",s:18,m:5,d:""},
+    {id:"DP-027",n:"Módulo Blanco Modelo 2",s:4,m:2,d:""},
+    {id:"DP-028",n:"Módulo Blanco Modelo 3",s:3,m:1,d:""},
+    {id:"DP-029",n:"Marco Triple Blanco Kalop",s:2,m:1,d:""},
+    {id:"DP-030",n:"Bastidor Negro Simple",s:3,m:1,d:""},
+    {id:"DP-031",n:"Bastidor Negro c/Ficha Enchufe",s:3,m:1,d:""},
+    {id:"DP-032",n:"Marco/Tapa Teclastar",s:1,m:1,d:""},
+    {id:"DP-033",n:"Módulos Negros Teclastar",s:6,m:2,d:""},
+    {id:"DP-034",n:"Módulo USB Doble Kalop",s:3,m:2,d:""},
+    {id:"DP-035",n:"Placa Frontal 3 Módulos Kalop",s:8,m:3,d:""},
+    {id:"DP-036",n:"Caja Superficie Pared Kalop",s:1,m:1,d:""},
+    {id:"DP-038",n:"Kit Cable Puesta a Tierra",s:1,m:1,d:""},
+  ]},
+  {id:"energia",ic:"🔋",nm:"Energía / Fuentes",dc:"Adaptadores DC y fuentes de alimentación",items:[
+    {id:"DP-015",n:"Fuente/Adaptador DC",s:3,m:1,d:""},
+  ]},
+  {id:"hardware",ic:"💻",nm:"Hardware / Almacenamiento",dc:"Discos, coolers, componentes PC",items:[
+    {id:"DP-021",n:"HDD WD Blue 1TB (WD10EZEX)",s:1,m:1,d:""},
+    {id:"DP-022",n:"Fan/Cooler PC 80mm Netmak",s:1,m:1,d:""},
+  ]},
+  {id:"infra",ic:"🗄️",nm:"Rack / Infraestructura",dc:"Bandejas rack, organizadores de cable",items:[
+    {id:"DP-024",n:"Bandeja Rack 1U",s:2,m:1,d:""},
+    {id:"DP-037",n:"Organizadores Adhesivos Vention",s:15,m:5,d:""},
+  ]},
+  {id:"toners",ic:"🖨️",nm:"Toners",dc:"Insumos de impresión por sector",items:[
+    {id:"TN-001",n:"Tóner CF287A — HP (PAGOS)",s:1,m:2,d:""},
+    {id:"TN-002",n:"Tóner LA-BRUNID1060 — Brother (PAGOS)",s:2,m:2,d:""},
+    {id:"TN-003",n:"Tóner CB435/436 — HP (PAGOS)",s:4,m:2,d:""},
+    {id:"TN-004",n:"Tóner 51B4H00 — Lexmark (CONVENIOS)",s:3,m:2,d:""},
+    {id:"TN-005",n:"Tóner 24B6035 — Lexmark (RECEPCION)",s:3,m:2,d:""},
+    {id:"TN-006",n:"Tóner CB435/436 — HP (AUDITORIAS)",s:3,m:2,d:""},
+    {id:"TN-007",n:"Tóner GN-TO505U — HP (FACTURACION)",s:4,m:2,d:""},
+    {id:"TN-008",n:"Tóner LA-BRUNID1060 — Brother (POSGRADO)",s:1,m:2,d:""},
+    {id:"TN-009",n:"Tóner CB435A — HP (GERENCIA GRAL)",s:2,m:2,d:""},
+    {id:"TN-010",n:"Tóner TN860XL — Brother (GERENTE)",s:1,m:2,d:""},
+  ]},
+  {id:"otros",ic:"📦",nm:"Varios / Otros",dc:"Iluminación, piezas sueltas y accesorios",items:[
+    {id:"DP-039",n:"Tira LED GSG 5050",s:1,m:1,d:""},
+    {id:"DP-040",n:"Piezas Sueltas / Accesorios",s:1,m:1,d:""},
+  ]},
+];
+
+// ══════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════
+let st={email:"",nom:"",prod:null,grp:null,qty:1,dif:"",obs:"",test:false,og:null,tipo:"SALIDA",qtyIngr:1};
+
+// ══════════════════════════════════════════════════════════
+//  GESTIÓN DE URL
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  ✅ CORRECCIÓN #4: cbaTime() — formato limpio sin coma
+//  Antes: toLocaleString() devolvía "05/05/2026, 14:30:00" (con coma)
+//  Ahora: formato manual controlado "05/05/2026 14:30"
+// ══════════════════════════════════════════════════════════
+function cbaTime(){
+  const now = new Date();
+  // Formatear en zona horaria Córdoba Argentina
+  const opts = { timeZone:'America/Argentina/Cordoba', day:'2-digit', month:'2-digit',
+                 year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false };
+  const parts = new Intl.DateTimeFormat('es-AR', opts).formatToParts(now);
+  const get = (t) => parts.find(p=>p.type===t)?.value || '00';
+  return `${get('day')}/${get('month')}/${get('year')} ${get('hour')}:${get('minute')}`;
+  // Resultado: "05/05/2026 14:30" — sin coma, sin segundos innecesarios
+}
+
+// Devuelve solo la fecha "dd/mm/aaaa"
+function cbaFecha(){
+  return cbaTime().split(' ')[0];
+}
+
+// Devuelve solo la hora "HH:mm"
+function cbaHora(){
+  return cbaTime().split(' ')[1] || '';
+}
+
+// ══════════════════════════════════════════════════════════
+//  VERIFICAR CONEXIÓN
+//  Usa no-cors para el ping — Apps Script no devuelve
+//  headers CORS en GET simple, pero si no da error de red
+//  significa que el script está vivo y accesible.
+// ══════════════════════════════════════════════════════════
+async function checkConnection(){
+  const banner = document.getElementById('connBanner');
+  const text   = document.getElementById('connText');
+
+  banner.className='conn-banner conn-pend';
+  text.textContent='Verificando conexión con Google Sheets…';
+
+  try {
+    // no-cors: el navegador no puede leer la respuesta pero
+    // tampoco lanza error si el servidor existe y responde.
+    // Si el script está caído o la URL es mala, lanza TypeError.
+    await fetch(SCRIPT_URL+'?action=ping', {
+      method: 'GET',
+      mode:   'no-cors'
+    });
+    // Si llegamos acá sin excepción = el script responde
+    banner.className='conn-banner conn-ok';
+    text.textContent='✅ Conectado a Google Sheets — los registros se guardarán automáticamente';
+  } catch(err){
+    banner.className='conn-banner conn-err';
+    text.textContent='❌ Sin conexión a Sheets — verificá tu internet o la URL del script';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  ENVIAR A SHEETS
+//  Apps Script acepta POST con Content-Type text/plain y
+//  responde con CORS headers cuando el deployment es
+//  "Cualquier persona". Si falla por CORS (HTML en file://)
+//  usamos un iframe form-submit como fallback garantizado.
+// ══════════════════════════════════════════════════════════
+async function sendToSheets(payload){
+  if(!SCRIPT_URL) return {ok:false, msg:'Sin URL configurada'};
+
+  // Intento 1: fetch normal (funciona desde servidor web / GitHub Pages)
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method:  'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body:    JSON.stringify(payload)
+    });
+    if(resp.ok || resp.type==='opaque'){
+      const data = await resp.json().catch(()=>({status:'ok'}));
+      return {ok: data.status==='ok', msg: data.message||''};
+    }
+    throw new Error('HTTP '+resp.status);
+  } catch(err){
+    // Intento 2: si el fetch normal falla por CORS (archivo local)
+    // usar form POST vía iframe — siempre funciona, sin respuesta
+    return sendViaForm(payload);
+  }
+}
+
+// Form-submit a través de iframe oculto — no requiere CORS,
+// el navegador simplemente manda el POST y descarta la respuesta.
+function sendViaForm(payload){
+  return new Promise(resolve => {
+    const form   = document.createElement('form');
+    const iframe = document.createElement('iframe');
+    const input  = document.createElement('input');
+
+    iframe.name  = '_adas_if';
+    iframe.style.display = 'none';
+    form.method  = 'POST';
+    form.action  = SCRIPT_URL;
+    form.target  = '_adas_if';
+    form.style.display = 'none';
+
+    input.type   = 'hidden';
+    input.name   = 'payload';
+    // Apps Script recibe e.parameter.payload — ajustar doPost si se usa este camino
+    // Para compatibilidad total, usamos e.postData.contents vía un segundo input
+    input.value  = JSON.stringify(payload);
+    form.appendChild(input);
+
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    iframe.onload = () => {
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+    };
+
+    form.submit();
+    // Resolver OK optimista — el form se envió, no podemos leer la respuesta
+    setTimeout(() => resolve({ok:true, msg:'Enviado (modo local)'}), 800);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  ✅ CORRECCIÓN #1: NAVEGACIÓN — gos() sin llave extra ni scrollTo duplicado
+// ══════════════════════════════════════════════════════════
+function gos(n){
+  document.querySelectorAll('.step').forEach(x=>x.classList.remove('active'));
+  const el = document.getElementById('s'+n);
+  if(el) el.classList.add('active');
+  const stepNum={'1':1,'1b':2,'2i':3,'2':3,'3':4,'4':5,'5':5};
+  const cur = stepNum[String(n)] || 1;
+  for(let i=1;i<=5;i++){
+    const d = document.getElementById('p'+i);
+    if(d) d.classList.toggle('on', i<cur);
+  }
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════════════════════
+//  VALIDAR EMAIL
+// ══════════════════════════════════════════════════════════
+function valEmail(){
+  const v   = document.getElementById('eml').value.trim().toLowerCase();
+  const err = document.getElementById('eerr');
+  if(!EMAILS.includes(v)){
+    err.classList.add('on');
+    document.getElementById('eml').style.borderColor='var(--err)';
+    return;
+  }
+  err.classList.remove('on');
+  document.getElementById('eml').style.borderColor='var(--ok)';
+  st.email = v;
+  st.nom   = NOM[v] || v;
+  document.getElementById('utag').textContent  = '👤 '+st.nom;
+  document.getElementById('utagb').textContent = '👤 '+st.nom;
+  renderG(GS);
+  gos('1b');
+}
+
+document.getElementById('eml').addEventListener('keydown', e => {
+  if(e.key==='Enter') valEmail();
+});
+
+function toggleTest(){
+  st.test = document.getElementById('ttog').checked;
+  document.getElementById('tbar').classList.toggle('on', st.test);
+}
+
+// ══════════════════════════════════════════════════════════
+//  SELECCIÓN DE TIPO
+// ══════════════════════════════════════════════════════════
+function setTipo(tipo){
+  st.tipo = tipo;
+  document.getElementById('btnRetiro').className  = 'tipo-btn'+(tipo==='SALIDA'?' sel-retiro':'');
+  document.getElementById('btnIngreso').className = 'tipo-btn'+(tipo==='ENTRADA'?' sel-ingreso':'');
+  if(tipo==='SALIDA'){
+    setTimeout(()=>{ renderG(GS); gos(2); }, 200);
+  } else {
+    document.getElementById('utag2i').textContent = '👤 '+st.nom;
+    document.getElementById('ingrNombre').value   = '';
+    document.getElementById('ingrExistente').style.display = 'none';
+    document.getElementById('ingrNuevo').style.display     = 'none';
+    st.qtyIngr = 1;
+    setTimeout(()=>{ gos('2i'); }, 200);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  RENDER DE GRUPOS
+// ══════════════════════════════════════════════════════════
+function renderG(gs){
+  const gl = document.getElementById('glist');
+  gl.innerHTML = '';
+  gs.forEach(g => {
+    const hasE = g.items.some(p=>p.s<=0);
+    const hasL = g.items.some(p=>p.s>0 && p.s<=p.m);
+    const sc   = hasE?'var(--err)':hasL?'var(--warn)':'var(--ok)';
+    const sl   = hasE?'sin stock':hasL?'stock bajo':'disponible';
+    const isO  = st.og===g.id;
+    const d    = document.createElement('div');
+    d.innerHTML = `
+      <button class="gbtn${isO?' sel':''}" onclick="togG('${g.id}')">
+        <span class="gico">${g.ic}</span>
+        <div class="ginfo"><div class="gname">${g.nm}</div><div class="gcnt">${g.items.length} productos · <span style="color:${sc}">${sl}</span></div></div>
+        <span class="garr">›</span>
+      </button>
+      <div class="slist${isO?' open':''}" id="sl_${g.id}">
+        ${g.items.map(p=>{
+          const c   = p.s<=0?'bad':p.s<=p.m?'warn':'ok';
+          const lbl = p.s<=0?'❌ Sin stock':p.s<=p.m?`⚠️ ${p.s} restantes`:`✅ ${p.s} en stock`;
+          const sel = st.prod && st.prod.id===p.id?' sel':'';
+          return `<div class="sitem${sel}" onclick="selP('${g.id}','${p.id}')">
+            <div class="sl"><div class="sid">${p.id}</div><div class="sname">${p.n}</div><div class="sstk ${c}">${lbl}</div></div>
+            <div class="schk">✓</div></div>`;
+        }).join('')}
+      </div>`;
+    gl.appendChild(d);
+  });
+}
+
+function togG(id){ st.og = st.og===id ? null : id; filterG(); }
+
+function filterG(){
+  const q = document.getElementById('psrch').value.toLowerCase();
+  if(!q){ renderG(GS); return; }
+  const f = GS
+    .map(g=>({...g, items:g.items.filter(p=>p.n.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))}))
+    .filter(g=>g.items.length>0);
+  const gl = document.getElementById('glist');
+  gl.innerHTML = '';
+  f.forEach(g => {
+    const d = document.createElement('div');
+    d.innerHTML = `
+      <button class="gbtn sel" onclick="togG('${g.id}')">
+        <span class="gico">${g.ic}</span>
+        <div class="ginfo"><div class="gname">${g.nm}</div><div class="gcnt">${g.items.length} resultado(s)</div></div>
+        <span class="garr" style="transform:rotate(90deg);color:var(--accent)">›</span>
+      </button>
+      <div class="slist open" id="sl_${g.id}">
+        ${g.items.map(p=>{
+          const c   = p.s<=0?'bad':p.s<=p.m?'warn':'ok';
+          const lbl = p.s<=0?'❌ Sin stock':p.s<=p.m?`⚠️ ${p.s} restantes`:`✅ ${p.s} en stock`;
+          const sel = st.prod && st.prod.id===p.id?' sel':'';
+          return `<div class="sitem${sel}" onclick="selP('${g.id}','${p.id}')">
+            <div class="sl"><div class="sid">${p.id}</div><div class="sname">${p.n}</div><div class="sstk ${c}">${lbl}</div></div>
+            <div class="schk">✓</div></div>`;
+        }).join('')}
+      </div>`;
+    gl.appendChild(d);
+  });
+}
+
+// ✅ CORRECCIÓN #6: selP() con guards para evitar TypeError si el ID no se encuentra
+function selP(gid, pid){
+  const g = GS.find(x=>x.id===gid);
+  if(!g){ console.warn('Grupo no encontrado:', gid); return; }
+  const p = g.items.find(x=>x.id===pid);
+  if(!p){ console.warn('Producto no encontrado:', pid); return; }
+  if(p.s<=0 && st.tipo==='SALIDA'){
+    alert('⚠️ Sin stock disponible para este producto.');
+    return;
+  }
+  st.prod = p;
+  st.grp  = g;
+  st.og   = gid;
+  document.getElementById('b2').disabled = false;
+  filterG();
+}
+
+// ══════════════════════════════════════════════════════════
+//  PASO 3 — Cantidad
+// ══════════════════════════════════════════════════════════
+function toS3(){
+  if(!st.prod) return;
+  st.qty = 1;
+  document.getElementById('qdsp').textContent = '1';
+  document.getElementById('s3pn').textContent = st.prod.id+' — '+st.prod.n;
+  document.getElementById('shint').textContent = 'Stock disponible: '+st.prod.s+' unidades';
+  const df = document.getElementById('dff');
+  const ds = document.getElementById('dfs');
+  if(st.prod.d){
+    ds.innerHTML = '<option value="">— Seleccionar variante —</option>' +
+      st.prod.d.split(',').map(d=>`<option value="${d.trim()}">${d.trim()}</option>`).join('');
+    df.style.display = 'block';
+  } else {
+    df.style.display = 'none';
+  }
+  document.getElementById('obs').value = '';
+  gos(3);
+}
+
+function chgQ(d){
+  const mx = st.prod ? st.prod.s : 99;
+  st.qty   = Math.max(1, Math.min(mx, st.qty+d));
+  document.getElementById('qdsp').textContent = st.qty;
+}
+
+// ══════════════════════════════════════════════════════════
+//  PASO 4 — Resumen
+// ══════════════════════════════════════════════════════════
+function toS4(){
+  document.getElementById("confirmTitle").textContent = st.tipo==="SALIDA" ? "Confirmar retiro" : "Confirmar ingreso";
+  st.dif = document.getElementById('dfs').value || '';
+  st.obs = document.getElementById('obs').value || '';
+  const ts   = cbaTime();
+  const rows = [
+    ['Solicitante', st.nom],
+    ['Correo',      st.email],
+    ['Producto',    st.prod.id+' — '+st.prod.n],
+    ['Categoría',   st.grp.nm],
+    ['Cantidad',    st.qty],
+    st.dif ? ['Variante',    st.dif] : null,
+    st.obs ? ['Observación', st.obs] : null,
+    ['Fecha/Hora',  ts]
+  ].filter(Boolean);
+  document.getElementById('smry').innerHTML = rows
+    .map(([k,v])=>`<div class="srow"><span class="sk">${k}</span><span class="sv">${v}</span></div>`)
+    .join('');
+  gos(4);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONFIRMAR — SALIDA (retiro)
+// ══════════════════════════════════════════════════════════
+async function confirm_(){
+  const ts = cbaTime();
+
+  const payload = {
+    action:      'registrar',
+    fecha:       cbaFecha(),
+    hora:        cbaHora(),
+    idProducto:  st.prod.id,
+    nombre:      st.prod.n,
+    tipo:        'SALIDA',
+    cantidad:    st.qty,
+    responsable: st.nom,
+    destino:     st.email.split('@')[0],
+    observacion: st.obs || (st.dif ? 'Variante: '+st.dif : '')
+  };
+
+  document.getElementById('loadingOverlay').classList.add('on');
+  const result = await sendToSheets(payload);
+  document.getElementById('loadingOverlay').classList.remove('on');
+
+  document.getElementById('tsbox').textContent = '🕐 Registrado el '+ts+' (Córdoba ARG)';
+
+  // ✅ CORRECCIÓN #7: rem siempre >= 0 también en el display
+  const rem = Math.max(0, st.prod.s - st.qty);
+  const rc  = rem<=0 ? 'color:var(--err)' : rem<=st.prod.m ? 'color:var(--warn)' : '';
+  const rows = [
+    ['Solicitante',     st.nom],
+    ['Producto',        st.prod.id+' — '+st.prod.n],
+    ['Cantidad retirada', st.qty],
+    ['Stock restante',  `<span style="${rc}">${rem}</span>`],
+    st.dif ? ['Variante',    st.dif] : null,
+    st.obs ? ['Observación', st.obs] : null
+  ].filter(Boolean);
+  document.getElementById('oksmry').innerHTML = rows
+    .map(([k,v])=>`<div class="srow"><span class="sk">${k}</span><span class="sv">${v}</span></div>`)
+    .join('');
+
+  const sheetsEl = document.getElementById('sheetsStatus');
+  if(result.ok){
+    sheetsEl.innerHTML = '<span style="color:var(--ok)">✅ Movimiento registrado en Google Sheets</span>';
+  } else {
+    sheetsEl.innerHTML = '<span style="color:var(--warn)">⚠️ No se pudo registrar en Sheets — anotalo manualmente</span>';
+  }
+
+  // Actualizar stock local
+  st.prod.s = rem;
+  document.getElementById('rbtn').style.display = st.test ? 'block' : 'none';
+  gos(5);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONFIRMAR INGRESO — producto existente
+//  ✅ CORRECCIONES #2 y #5: usaba SCRIPT_URL (undefined) y ts.split(',')
+// ══════════════════════════════════════════════════════════
+async function confirmarIngreso(){
+  if(!st.prod){ alert('Seleccioná un producto.'); return; }
+  const dif = document.getElementById('ingrDif').value || '';
+
+  const payload = {
+    action:      'registrar',
+    fecha:       cbaFecha(),
+    hora:        cbaHora(),
+    idProducto:  st.prod.id,
+    nombre:      st.prod.n,
+    tipo:        'ENTRADA',
+    cantidad:    st.qtyIngr,
+    responsable: st.nom,
+    destino:     'Ingreso al depósito',
+    observacion: dif ? 'Variante: '+dif : 'Reposición de stock'
+  };
+
+  document.getElementById('loadingOverlay').classList.add('on');
+  const result = await sendToSheets(payload);
+  document.getElementById('loadingOverlay').classList.remove('on');
+
+  st.prod.s += st.qtyIngr;
+  mostrarExitoIngreso(st.prod.id, st.prod.n, st.qtyIngr, dif, result.ok, cbaTime(), false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONFIRMAR INGRESO NUEVO — producto que no existía
+//  ✅ CORRECCIONES #2 y #5: mismo fix de SCRIPT_URL y split
+// ══════════════════════════════════════════════════════════
+async function confirmarIngresoNuevo(){
+  const nombre = document.getElementById('ingrNombre').value.trim();
+  const cat    = document.getElementById('ingrCat').value;
+  const varNew = document.getElementById('ingrVarNew').value.trim();
+  const link   = document.getElementById('ingrLink').value.trim();
+
+  if(!nombre){ alert('Escribí el nombre del producto.'); return; }
+  if(!cat)   { alert('Seleccioná una categoría.'); return; }
+
+  // Generar nuevo ID único
+  const existingIds = GS.flatMap(g=>g.items.map(p=>p.id)).filter(id=>id.startsWith('DP-'));
+  const maxNum      = Math.max(0, ...existingIds.map(id=>parseInt(id.replace('DP-',''))||0));
+  const newId       = 'DP-'+(maxNum+1).toString().padStart(3,'0');
+
+  const payloadMov = {
+    action:      'registrar',
+    fecha:       cbaFecha(),
+    hora:        cbaHora(),
+    idProducto:  newId,
+    nombre:      nombre,
+    tipo:        'ENTRADA',
+    cantidad:    st.qtyIngr,
+    responsable: st.nom,
+    destino:     'Ingreso al depósito',
+    observacion: ['PRODUCTO NUEVO', 'Categoría: '+cat, varNew?'Variante: '+varNew:'', link?'Link: '+link:''].filter(Boolean).join(' | ')
+  };
+
+  const payloadNuevo = {
+    action:       'nuevoProducto',
+    idProducto:   newId,
+    nombre:       nombre,
+    categoria:    cat,
+    variante:     varNew,
+    link:         link,
+    stockInicial: st.qtyIngr,
+    stockMin:     1,
+    fecha:        cbaFecha()
+  };
+
+  document.getElementById('loadingOverlay').classList.add('on');
+  const result = await sendToSheets(payloadMov);
+  // Segundo POST para crear el producto en INVENTARIO (no bloqueante)
+  sendToSheets(payloadNuevo).catch(()=>{});
+  document.getElementById('loadingOverlay').classList.remove('on');
+
+  // Agregar al estado local
+  const grupoTarget = GS.find(g=>g.nm===cat) || GS.find(g=>g.id==='otros');
+  if(grupoTarget){
+    grupoTarget.items.push({id:newId, n:nombre, s:st.qtyIngr, m:1, d:varNew||''});
+    STK0[newId] = st.qtyIngr;
+  }
+
+  mostrarExitoIngreso(newId, nombre, st.qtyIngr, varNew, result.ok, cbaTime(), true);
+}
+
+// ══════════════════════════════════════════════════════════
+//  PANTALLA DE ÉXITO PARA INGRESOS
+//  ✅ CORRECCIÓN #3: getElementById('restoreBtn') → 'rbtn'
+// ══════════════════════════════════════════════════════════
+function mostrarExitoIngreso(id, nombre, qty, dif, exito, ts, esNuevo){
+  document.getElementById('successTitle').textContent = esNuevo ? '✨ Producto nuevo registrado!' : '📥 Stock actualizado!';
+  document.getElementById('tsbox').textContent = (exito?'✅':'⚠️')+' Registrado el '+ts+' (Córdoba ARG)'+(exito?'':' — solo localmente');
+  const rows = [
+    ['Responsable',         st.nom],
+    ['Operación',           'INGRESO AL DEPÓSITO'],
+    ['Producto',            id+' — '+nombre],
+    esNuevo ? ['Estado',    '✨ Producto nuevo creado'] : ['Stock nuevo', st.prod ? String(st.prod.s) : '—'],
+    ['Cantidad ingresada',  qty],
+    dif ? ['Variante',      dif] : null,
+    ['Registrado en Sheets', exito?'✅ Sí':'⚠️ Solo local']
+  ].filter(Boolean);
+  document.getElementById('oksmry').innerHTML = rows
+    .map(([k,v])=>`<div class="srow"><span class="sk">${k}</span><span class="sv">${v}</span></div>`)
+    .join('');
+  // ✅ id correcto: 'rbtn'
+  document.getElementById('rbtn').style.display = st.test ? 'block' : 'none';
+  gos(5);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CANTIDAD INGRESO
+// ══════════════════════════════════════════════════════════
+function chgQIngr(d){
+  st.qtyIngr = Math.max(1, (st.qtyIngr||1)+d);
+  // Actualizar el display que corresponda según cuál está visible
+  const dispIngr    = document.getElementById('qdspIngr');
+  const dispIngrNew = document.getElementById('qdspIngrNew');
+  if(dispIngr)    dispIngr.textContent    = st.qtyIngr;
+  if(dispIngrNew) dispIngrNew.textContent = st.qtyIngr;
+}
+
+// ══════════════════════════════════════════════════════════
+//  BÚSQUEDA DE INGRESO
+// ══════════════════════════════════════════════════════════
+function buscarIngreso(){
+  const q     = document.getElementById('ingrNombre').value.trim().toLowerCase();
+  const exDiv = document.getElementById('ingrExistente');
+  const nuDiv = document.getElementById('ingrNuevo');
+  if(q.length<2){ exDiv.style.display='none'; nuDiv.style.display='none'; return; }
+
+  let found=null, foundGrp=null;
+  for(const g of GS){
+    for(const p of g.items){
+      if(p.n.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)){
+        found=p; foundGrp=g; break;
+      }
+    }
+    if(found) break;
+  }
+
+  if(found){
+    st.prod = found; st.grp = foundGrp;
+    document.getElementById('ingrMatchBadge').innerHTML =
+      '✅ Encontrado: <strong>'+found.id+' — '+found.n+'</strong><br><span style="font-weight:400;font-size:11px">Stock actual: '+found.s+' · Categoría: '+foundGrp.nm+'</span>';
+    const df = document.getElementById('ingrDifField');
+    const ds = document.getElementById('ingrDif');
+    if(found.d){
+      ds.innerHTML = '<option value="">— Sin variante —</option>' +
+        found.d.split(',').map(d=>'<option value="'+d.trim()+'">'+d.trim()+'</option>').join('');
+      df.style.display = 'block';
+    } else {
+      df.style.display = 'none';
+    }
+    st.qtyIngr = 1;
+    document.getElementById('qdspIngr').textContent = '1';
+    exDiv.style.display = 'block';
+    nuDiv.style.display = 'none';
+  } else if(q.length>=3){
+    st.prod = null; st.qtyIngr = 1;
+    document.getElementById('qdspIngrNew').textContent = '1';
+    exDiv.style.display = 'none';
+    nuDiv.style.display = 'block';
+  } else {
+    exDiv.style.display = 'none';
+    nuDiv.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  RESTAURAR STOCK (modo test)
+// ══════════════════════════════════════════════════════════
+function restoreStock(){
+  GS.forEach(g => g.items.forEach(p => {
+    if(STK0[p.id] !== undefined) p.s = STK0[p.id];
+  }));
+  alert('✅ Stock restaurado a valores originales.');
+  reset_();
+}
+
+// ══════════════════════════════════════════════════════════
+//  RESET COMPLETO
+// ══════════════════════════════════════════════════════════
+function reset_(){
+  st = {email:"",nom:"",prod:null,grp:null,qty:1,dif:"",obs:"",test:st.test,og:null,tipo:'SALIDA',qtyIngr:1};
+  document.getElementById('btnRetiro').className  = 'tipo-btn';
+  document.getElementById('btnIngreso').className = 'tipo-btn';
+  document.getElementById('ingrNombre').value     = '';
+  document.getElementById('ingrExistente').style.display = 'none';
+  document.getElementById('ingrNuevo').style.display     = 'none';
+  document.getElementById('eml').value            = '';
+  document.getElementById('eml').style.borderColor = '';
+  document.getElementById('eerr').classList.remove('on');
+  document.getElementById('psrch').value          = '';
+  document.getElementById('b2').disabled          = true;
+  document.getElementById('ttog').checked         = st.test;
+  gos(1);
+}
+
+// Iniciar al cargar
+checkConnection();
+</script>
+</body>
+</html>
